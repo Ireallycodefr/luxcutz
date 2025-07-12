@@ -118,7 +118,7 @@ text: `A new appointment has been booked:\n\nCustomer: ${customerName}\nEmail: $
 transporter.sendMail(mailOptions, (error, info) => {
 if (error) {
 console.error("Email error:", error);
-return res.status(500).json({ error: "Email sending failed" });
+return res.status(500).json({ error: error.message });
 }
 console.log("Email sent:", info.response);
 res.status(200).json({ message: "Appointment booked successfully!" });
