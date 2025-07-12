@@ -1,6 +1,6 @@
 
 function loadAvailableTimes(date) {
-    fetch(`http://localhost:4000/available-times?date=${date}`)
+    fetch(`/available-times?date=${date}`)
     .then(response => response.json())
     .then(times => {
     const dropdown = document.getElementById("timeSlots");
@@ -55,7 +55,7 @@ function loadAvailableTimes(date) {
     
     
     
-        fetch("http://localhost:4000/book-appointment", {
+        fetch("/book-appointment", {
     
             method: "POST",
     
