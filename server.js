@@ -1,4 +1,4 @@
-require
+require ("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
@@ -11,10 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
-
+app.use(cors());
 // File to store appointments
 const appointmentsFile = path.join(__dirname, "appointments.json");
 
