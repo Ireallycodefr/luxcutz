@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { existsSync, writeFileSync, readFileSync } = fs;
-
+console.log("RENDER EMAIL_PASS:", process.env.EMAIL_PASS);
 const app = express();
 const PORT = process.env.PORT || 4000;
 
