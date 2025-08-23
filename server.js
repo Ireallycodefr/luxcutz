@@ -36,12 +36,8 @@ function getTimesForDate(dateStr) {
 const date = new Date(dateStr);
 const day = date.getDay();
 
-if (day === 0 || day === 6) {
+if (day === 0) {
 return [
-"12:00 PM",
-"12:30 PM",
-"1:00 PM",
-"1:30 PM",
 "2:00 PM",
 "2:30 PM",
 "3:00 PM",
@@ -154,4 +150,5 @@ res.json(available);
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
