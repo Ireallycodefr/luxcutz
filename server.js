@@ -50,7 +50,7 @@ return [
 "6:30 PM",
 "7:00 PM"
 ];
-} else {
+} else if (day === 5 || day === 6) {
 return [
 "8:00 AM",
 "8:30 AM",
@@ -76,7 +76,8 @@ return [
 "6:30 PM",
 "7:00 PM"
 ];
-}
+} else {
+  return [];
 }
 
 // Nodemailer transporter
@@ -150,6 +151,7 @@ res.json(available);
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
