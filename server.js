@@ -79,6 +79,7 @@ return [
 } else {
   return [];
 }
+}
 
 // Nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -151,6 +152,7 @@ res.json(available);
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
