@@ -118,7 +118,7 @@ writeAppointments(appointments);
 
 const mailOptions = {
 from: "Alvarezbryan111@yahoo.com",
-to: [ "Alvarezbryan111@yahoo.com", customerEmail ]
+to: [ "Alvarezbryan111@yahoo.com", customerEmail ],
 subject: "New Appointment Booked",
 text: `A new appointment has been booked:\n\nCustomer: ${customerName}\nEmail: ${customerEmail}\nDate: ${appointmentDate}\nTime: ${appointmentTime}`
 };
@@ -151,6 +151,7 @@ res.json(available);
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
