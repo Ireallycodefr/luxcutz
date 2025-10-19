@@ -1,4 +1,4 @@
-require ("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 4000;
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(cors());
+
 // File to store appointments
 const appointmentsFile = path.join(__dirname, "appointments.json");
 
@@ -29,6 +30,33 @@ return JSON.parse(data);
 // Save updated appointments
 function writeAppointments(appointments) {
 writeFileSync(appointmentsFile, JSON.stringify(appointments, null, 2));
+}
+
+// --- Lock system for safe writes ---
+let isWriting = false;
+const writeQueue = [];
+
+function queueWrite(newAppointments, callback) {
+if (isWriting) {
+// Queue up until the current write finishes
+writeQueue.push({ newAppointments, callback });
+} else {
+performWrite(newAppointments, callback);
+}
+}
+
+function performWrite(newAppointments, callback) {
+isWriting = true;
+try {
+writeAppointments(newAppointments);
+} finally {
+isWriting = false;
+if (writeQueue.length > 0) {
+const next = writeQueue.shift();
+performWrite(next.newAppointments, next.callback);
+}
+if (callback) callback();
+}
 }
 
 // Get time slots based on day of week
@@ -54,7 +82,7 @@ return [
 return [
 "8:00 AM",
 "8:30 AM",
-"9:00 AM", 
+"9:00 AM",
 "9:30 AM",
 "10:00 AM",
 "10:30 AM",
@@ -77,7 +105,7 @@ return [
 "7:00 PM"
 ];
 } else {
-  return [];
+return [];
 }
 }
 
@@ -92,7 +120,7 @@ pass: process.env.EMAIL_PASS
 },
 });
 
-// Endpoint to book appointment
+// --- BOOK APPOINTMENT ENDPOINT ---
 app.post("/book-appointment", (req, res) => {
 const { customerName, customerEmail, appointmentDate, appointmentTime } = req.body;
 
@@ -100,7 +128,10 @@ if (!customerName || !customerEmail || !appointmentDate || !appointmentTime) {
 return res.status(400).json({ error: "All fields are required" });
 }
 
+// Re-read appointments fresh
 const appointments = readAppointments();
+
+// Double-check for duplicates
 const isTaken = appointments.some(
 (appt) => appt.date === appointmentDate && appt.time === appointmentTime
 );
@@ -109,17 +140,22 @@ if (isTaken) {
 return res.status(400).json({ error: "This time slot is already booked" });
 }
 
-appointments.push({
+const newAppointment = {
 date: appointmentDate,
 time: appointmentTime,
 customerName,
 customerEmail
-});
-writeAppointments(appointments);
+};
+
+appointments.push(newAppointment);
+
+// Write safely using our queue system
+queueWrite(appointments, () => {
+console.log("Appointments updated safely");
 
 const mailOptions = {
 from: "Alvarezbryan111@yahoo.com",
-to: [ "Alvarezbryan111@yahoo.com", customerEmail ],
+to: ["Alvarezbryan111@yahoo.com", customerEmail],
 subject: "New Appointment Booked",
 text: `A new appointment has been booked:\n\nCustomer: ${customerName}\nEmail: ${customerEmail}\nDate: ${appointmentDate}\nTime: ${appointmentTime}\nAddress: 1317 Wickell Rd`
 };
@@ -133,28 +169,28 @@ console.log("Email sent:", info.response);
 res.status(200).json({ message: "Appointment booked successfully!" });
 });
 });
+});
 
-// Endpoint to get available times
+// --- AVAILABLE TIMES ENDPOINT ---
 app.get("/available-times", (req, res) => {
 const { date } = req.query;
 if (!date) return res.status(400).json({ error: "Date is required" });
 
 const allTimes = getTimesForDate(date);
 const appointments = readAppointments();
+
 const bookedTimes = appointments
 .filter((appt) => appt.date === date)
 .map((appt) => appt.time);
+
 const available = allTimes.filter((time) => !bookedTimes.includes(time));
 res.json(available);
 });
 
-// Start the server
+// --- START SERVER ---
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
-
 
 
 
