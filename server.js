@@ -38,7 +38,6 @@ const writeQueue = [];
 
 function queueWrite(newAppointments, callback) {
 if (isWriting) {
-// Queue up until the current write finishes
 writeQueue.push({ newAppointments, callback });
 } else {
 performWrite(newAppointments, callback);
@@ -149,7 +148,7 @@ customerEmail
 
 appointments.push(newAppointment);
 
-// Write safely using our queue system
+// Write safely using queue system
 queueWrite(appointments, () => {
 console.log("Appointments updated safely");
 
@@ -187,10 +186,66 @@ const available = allTimes.filter((time) => !bookedTimes.includes(time));
 res.json(available);
 });
 
+// --- ADMIN: Get future appointments only ---
+app.get("/admin/appointments", (req, res) => {
+const appointments = readAppointments();
+const now = new Date();
+
+const futureAppointments = appointments.filter(appt => {
+const [hours, minutesPart] = appt.time.split(":");
+const minutes = parseInt(minutesPart);
+const isPM = appt.time.includes("PM");
+let hour = parseInt(hours);
+if (isPM && hour !== 12) hour += 12;
+if (!isPM && hour === 12) hour = 0;
+
+const apptDateTime = new Date(appt.date);
+apptDateTime.setHours(hour, minutes, 0, 0);
+
+return apptDateTime >= now;
+});
+
+res.json(futureAppointments);
+});
+
+// --- ADMIN: Cancel future appointments only ---
+app.delete("/admin/appointments/:index", (req, res) => {
+const index = parseInt(req.params.index);
+const appointments = readAppointments();
+
+if (isNaN(index) || index < 0 || index >= appointments.length) {
+return res.status(400).json({ error: "Invalid index" });
+}
+
+const appt = appointments[index];
+
+const [hours, minutesPart] = appt.time.split(":");
+const minutes = parseInt(minutesPart);
+const isPM = appt.time.includes("PM");
+let hour = parseInt(hours);
+if (isPM && hour !== 12) hour += 12;
+if (!isPM && hour === 12) hour = 0;
+
+const apptDateTime = new Date(appt.date);
+apptDateTime.setHours(hour, minutes, 0, 0);
+
+if (apptDateTime < new Date()) {
+return res.status(400).json({ error: "Cannot cancel past appointments" });
+}
+
+const removed = appointments.splice(index, 1);
+queueWrite(appointments, () => {
+res.json({ message: "Appointment canceled", removed });
+});
+});
+
 // --- START SERVER ---
 app.listen(PORT, () => {
 console.log(`Server running on http://localhost:${PORT}`);
 });
+
+
+
 
 
 
