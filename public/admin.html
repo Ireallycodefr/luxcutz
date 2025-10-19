@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin - Appointments</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; }
+h1 { margin-bottom: 20px; }
+li { margin-bottom: 10px; }
+button { margin-left: 10px; }
+</style>
+</head>
+<body>
+<h1>Booked Appointments</h1>
+<ul id="appointmentsList"></ul>
+
+<script>
+async function loadAppointments() {
+const response = await fetch("/admin/appointments");
+const appointments = await response.json();
+const list = document.getElementById("appointmentsList");
+list.innerHTML = "";
+
+const now = new Date();
+
+appointments.forEach((appt, i) => {
+const li = document.createElement("li");
+li.textContent = `${appt.date} ${appt.time} - ${appt.customerName} (${appt.customerEmail})`;
+
+// Convert time string to 24h
+const [hours, minutesPart] = appt.time.split(":");
+const minutes = parseInt(minutesPart);
+const isPM = appt.time.includes("PM");
+let hour = parseInt(hours);
+if (isPM && hour !== 12) hour += 12;
+if (!isPM && hour === 12) hour = 0;
+
+const apptDateTime = new Date(appt.date);
+apptDateTime.setHours(hour, minutes, 0, 0);
+
+const btn = document.createElement("button");
+
+if (apptDateTime < now) {
+btn.disabled = true;
+btn.textContent = "Past Appointment";
+} else {
+btn.textContent = "Cancel";
+btn.onclick = async () => {
+await fetch(`/admin/appointments/${i}`, { method: "DELETE" });
+loadAppointments(); // Refresh list
+};
+}
+
+li.appendChild(btn);
+list.appendChild(li);
+});
+}
+
+window.addEventListener("DOMContentLoaded", loadAppointments);
+</script>
+</body>
+</html>
